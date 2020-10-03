@@ -14,6 +14,15 @@
 #include <wlr/types/wlr_box.h>
 #include <wlr/render/drm_format_set.h>
 
+struct wlr_wl_seat {
+	struct wl_seat *seat;
+
+	/* TODO: struct wl_list link; */
+	char *name;
+	struct wl_pointer *pointer;
+	struct wl_keyboard *keyboard;
+};
+
 struct wlr_wl_backend {
 	struct wlr_backend backend;
 
@@ -38,12 +47,9 @@ struct wlr_wl_backend {
 	struct wp_presentation *presentation;
 	struct zwp_linux_dmabuf_v1 *zwp_linux_dmabuf_v1;
 	struct zwp_relative_pointer_manager_v1 *zwp_relative_pointer_manager_v1;
-	struct wl_seat *seat;
-	struct wl_pointer *pointer;
-	struct wl_keyboard *keyboard;
+	struct wlr_wl_seat seat;
 	struct wlr_wl_pointer *current_pointer;
 	struct zwp_tablet_manager_v2 *tablet_manager;
-	char *seat_name;
 	struct wlr_drm_format_set linux_dmabuf_v1_formats;
 };
 
@@ -114,11 +120,18 @@ void create_wl_pointer(struct wl_pointer *wl_pointer, struct wlr_wl_output *outp
 void create_wl_keyboard(struct wl_keyboard *wl_keyboard, struct wlr_wl_backend *wl);
 struct wlr_wl_input_device *create_wl_input_device(
 	struct wlr_wl_backend *backend, enum wlr_input_device_type type);
+void create_wl_seat(struct wl_seat *wl_seat, struct wlr_wl_backend *wl);
+void destroy_wl_seats(struct wlr_wl_backend *wl);
 
 extern const struct wl_seat_listener seat_listener;
 
 struct wlr_wl_tablet_seat *wl_add_tablet_seat(
 		struct zwp_tablet_manager_v2 *manager,
 		struct wl_seat *seat, struct wlr_wl_backend *backend);
+
+/* Similar to wl_list_for_each(). No guarantee that after loop var will be set to last value
+ * For now we have only one or none seats
+ */
+#define wlr_wl_backend_for_each_seat(var, wl) for (var = &wl->seat; var && var->seat; var = NULL)
 
 #endif
